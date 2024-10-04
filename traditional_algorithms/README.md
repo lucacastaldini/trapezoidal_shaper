@@ -19,3 +19,7 @@ activate gammasim env and export PYTHONPATH with gammasim path:
 $ source /path/to/gammasim_env/bin/activate
 (gammasim) $ export PYTHONPATH=/path/to/gammalib/gammasim
 ```
+
+## visualize waveform model 
+
+https://www.desmos.com/calculator/svx1kmywcb
