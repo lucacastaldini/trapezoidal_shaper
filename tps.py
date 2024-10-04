@@ -1,6 +1,5 @@
-from scipy.signal import lfilter, find_peaks
 import numpy as np 
-import matplotlib.pyplot as plt
+from scipy.signal import lfilter, find_peaks
 
 def exp_func(tt, H, t_shift, M):
     """Funzione esponenziale per il calcolo della forma d'onda"""
@@ -68,56 +67,89 @@ def time_filter(t, signal, alpha_l, alpha_h, gain, initial_conditions=[0]):
 
     return y_low, y_high, dy_dt, d2y_dt
     
-def compute_and_separate_trap(M, dd, vv, m, l, h=0.1):
-    dml_vals, p_vals, s_vals, s_vals_corr = trap_filter(M, dd, vv, m, l)
+# def compute_and_separate_trap(M, dd, vv, m, l, h=0.1):
+#     dml_vals, p_vals, s_vals, s_vals_corr = trap_filter(M, dd, vv, m, l)
     
-    # Finding peaks
-    t_zeros = find_peaks(dml_vals, height=[h], width=max(l - 2, 1), prominence=[h / 2], distance=m)[0]
-    t_ends = find_peaks(dml_vals, width=max(m - 2, 1), distance=m)[0]
+#     # Finding peaks
+#     t_zeros = find_peaks(dml_vals, height=[h], width=max(l - 2, 1), prominence=[h / 2], distance=m)[0]
+#     t_ends = find_peaks(dml_vals, width=max(m - 2, 1), distance=m)[0]
 
-    # print(f"t0 {t_zeros}")
-    # print(f"tend {t_ends}")
+#     # print(f"t0 {t_zeros}")
+#     # print(f"tend {t_ends}")
     
-    s_vals_l = []
-    s_vals_corr_l = []
+#     s_vals_l = []
+#     s_vals_corr_l = []
 
-    # Iterate over t_zeros, checking for overflow by limiting the range
-    for i in range(len(t_zeros)):
-        # Limit j to t_ends that are greater than t_zeros[i]
-        valid_ends = [t_end for t_end in t_ends if t_end > t_zeros[i]]
+#     # Iterate over t_zeros, checking for overflow by limiting the range
+#     for i in range(len(t_zeros)):
+#         # Limit j to t_ends that are greater than t_zeros[i]
+#         valid_ends = [t_end for t_end in t_ends if t_end > t_zeros[i]]
         
-        if not valid_ends:
-            print(f"Warning: pile-up detected at index {i}")
-            continue
+#         if not valid_ends:
+#             print(f"Warning: pile-up detected at index {i}")
+#             continue
         
-        for t_end in valid_ends:
-            if i < len(t_zeros) - 1 and t_end <= t_zeros[i + 1]:
-                # Normal case
-                s_vals_l.append(extract_trap(s_vals, t_zeros[i], t_end))
-                s_vals_corr_l.append(extract_trap(s_vals_corr, t_zeros[i], t_end))
-            elif i == len(t_zeros) - 1:
-                # Last segment, no t_zeros[i + 1] to compare to
-                s_vals_l.append(extract_trap(s_vals, t_zeros[i], t_end))
-                s_vals_corr_l.append(extract_trap(s_vals_corr, t_zeros[i], t_end))
+#         for t_end in valid_ends:
+#             if i < len(t_zeros) - 1 and t_end <= t_zeros[i + 1]:
+#                 # Normal case
+#                 s_vals_l.append(extract_trap(s_vals, t_zeros[i], t_end))
+#                 s_vals_corr_l.append(extract_trap(s_vals_corr, t_zeros[i], t_end))
+#             elif i == len(t_zeros) - 1:
+#                 # Last segment, no t_zeros[i + 1] to compare to
+#                 s_vals_l.append(extract_trap(s_vals, t_zeros[i], t_end))
+#                 s_vals_corr_l.append(extract_trap(s_vals_corr, t_zeros[i], t_end))
 
-    return dml_vals, p_vals, s_vals_l, s_vals_corr_l, t_zeros, t_ends
+#     return dml_vals, p_vals, s_vals_l, s_vals_corr_l, t_zeros, t_ends
 
+def check_peaks(peaks_1, peaks_2, range_peak):
+    # Extract peak indexes
+    indexes_1 = peaks_1[0]
+    indexes_2 = peaks_2[0]
 
+    validated_peaks = []
 
+    # Check if the second peaks output has values
+    if len(indexes_2) == 0:
+        print("No peaks detected in the second set.")
+        return validated_peaks  # Return an empty list if no peaks in the second set
+
+    # Check if a peak in the first set happens within the range after peaks in the second set
+    for idx_2 in indexes_2:
+        # Check for peaks in the first set within the range [idx_2+1, idx_2+range_after_peak]
+        possible_peaks = indexes_1[(indexes_1 <= idx_2) & (indexes_1 > idx_2 - range_peak)]
+        
+        if len(possible_peaks) > 0:
+            # Append only the idx_2 value if it has a match in indexes_1
+            validated_peaks.append(idx_2)
+
+    return validated_peaks
+
+import numpy as np
+
+def find_base_mean(tps_scaled_out, first_t_zero, stop_before_t0):
+    if first_t_zero<1:
+        raise ValueError(f"Cannot compute mean: first_t_zero is too low: {stop_before_t0}")
+    elif stop_before_t0 > first_t_zero:
+        raise ValueError(f"Cannot compute mean: first_t_zero {first_t_zero} is greater than t zero: {stop_before_t0}")
+    else:
+        return np.mean(tps_scaled_out[0:first_t_zero - stop_before_t0])
+
+def update_ma_signal(old_mean, new_value, alpha):
+    # Update base mean using alpha
+    return (1 - alpha) * old_mean + alpha * new_value
+        
+
+def find_tps_height_area(base_mean, w, t, s_vals_scaled, dt):
+        
+    height = np.mean(s_vals_scaled[w[0]:w[1]]) - base_mean
+    area   = np.sum(s_vals_scaled[t[0]:t[1]])*dt - base_mean
+
+    return height, area
+    
 def extract_trap(s, start, end):
     x=np.zeros_like(s)
     x[start:end]=s[start:end]
     return x
-
-def find_area(v, d):
-    """
-    Description: "Computes area of a sampled signal."
-    Parameters:
-        v: Time series vector
-        d: Sampling time
-    Return value: Area
-    """
-    return np.sum(v)*d
 
 def lp_filter(signal, k, initial_conditions):
     N=[0,k]
@@ -132,53 +164,75 @@ def hp_filter(signal, alpha):
     D=[1, -alpha]
     return gain*lfilter(N, D, signal)
 
+def update_recursive_avg(avg, new_sample, n):
+    return avg + (new_sample - avg) / n
 
-def plot_traps(tt, input, out_scaled, peaks_signal, t_zeros, t_end):
-    r_value = 0  # Starting red component
-    increment = 30 / 255  # Convert 30 to a normalized range (0-1)
+def update_recursive_std(sigmaq, avg_square, avg_update, new_sample, n):
+    return sigmaq + avg_square - avg_update**2 + (new_sample**2 - sigmaq - avg_square)/ n
 
-    # Plot vv
-    # plt.plot(tt, peaks_signal, label='dml_vals', color='r', linewidth=2)
-    plt.plot(tt, input, label='vv', color='y', linestyle="--", linewidth=2)
+def compute_threshold(dyy, th_dy):
+    """
+    Computes the detection threshold based on the mean and standard deviation
+    of the `dyy` array and a scaling factor `th_dy`.
 
-    for s in out_scaled:
+    Parameters:
+    dyy (np.array): The input signal array.
+    th_dy (float): A scaling factor to adjust the threshold.
+
+    Returns:
+    float: The computed detection threshold.
+    """
+
+    # Calculate mean and standard deviation of the input signal `dyy`
+    mean_value_dy = np.mean(dyy)
+    std_dev_dy = np.std(dyy)
+
+    # Compute the detection threshold
+    th_detection_dy = th_dy * std_dev_dy + mean_value_dy
+
+    # Print the results
+    print("Mean value of dyy:", mean_value_dy)
+    print("Standard deviation of dyy:", std_dev_dy)
+
+    return th_detection_dy
+
+def detect_waveforms(m, l, dyy, d2yy, der_ord_detection, th_detection_dy=None, th_detection_d2y=None):
+
+    if not der_ord_detection in [1,2]:
+        raise ValueError(f"Detection method inserted: {der_ord_detection} is not 1 or 2")
+
+    if der_ord_detection == 1:
+        candidate_peaks=find_peaks(x=dyy, height=th_detection_dy, prominence=[.1] )
+
+    elif der_ord_detection == 2:
+        candidate_peaks=find_peaks(x=d2yy, height=th_detection_d2y )
+
+    print("candidate_peaks: ", candidate_peaks)
+
+    candidate_peaks = candidate_peaks[0]
+
+    # Find zero-crossings using linear interpolation
+    t_zeros = []
+    z_cr_win=5
+    extra_int_window=5
+    ftd_s=0
+    ftd_e=3
+    top_mean_windows=[]
+    tp_int_windows=[]
+    if len(candidate_peaks)>0:
+        for peak in candidate_peaks:
+            for i in range(peak-z_cr_win, peak+z_cr_win):
+                if np.sign(d2yy[i]) != np.sign(d2yy[i + 1]):
+                    
+                    # Linear interpolation to estimate zero-crossing point
+                    t_zeros.append(peak)
+                    window=[peak+l+ftd_s, peak+l+m-ftd_e]
+                    int_start=[peak-extra_int_window, peak+m+2*l+extra_int_window]
+                    top_mean_windows.append(window)
+                    tp_int_windows.append(int_start)
+                    print("t0 detected: : ", t_zeros)
+                    print("window in : ", window)
+                    break
         
-        plt.plot(tt, s, label='s_vals', color='b', linewidth=2)
-
-
-    if t_zeros is not None:
-        for i in t_zeros:
-            plt.axvline(x=i, label=f"t0: {i}", linestyle="--")
-
-    if t_zeros is not None:
-        for i in t_end:
-            plt.axvline(x=i, label=f"t0_end: {i}", linestyle="--", color='r')
-    # Add labels and title
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
-    plt.title('s_vals and vv vs. Time')
-
-    plt.legend()
-
-    plt.grid(True)
-
-    plt.show()
-
-def plot_io(tt, input, output):
-    # Plot vv
-    # plt.plot(tt, peaks_signal, label='dml_vals', color='r', linewidth=2)
-    plt.plot(tt, input, label='vv', color='y', linestyle="--", linewidth=2)
-
-    
-        
-    plt.plot(tt, output, label='s_vals', color='b', linewidth=2)
-
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
-    plt.title('s_vals and vv vs. Time')
-
-    plt.legend()
-
-    plt.grid(True)
-
-    plt.show()
+    print("found peaks in: ", t_zeros)
+    return t_zeros, top_mean_windows, tp_int_windows
