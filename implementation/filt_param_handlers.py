@@ -2,25 +2,22 @@ import csv
 
 import numpy as np 
 
-from tps import time_filter, compute_threshold
+from implementation.tps import time_filter, compute_threshold
 from gammasim import GammaSim
 
 
-def find_time_filter_params(gs : GammaSim, t, alpha_l, alpha_h, gain_k, th_dy = 3.2, th_d2y = 0.2, out='time_filt_params.csv'):
+def find_time_filter_params(gs : GammaSim, t, alpha_l, alpha_h, gain_k, th_dy_multiplier = 3.2, th_d2y_multiplier = 0.2):
     y ,b, dyy, d2yy = time_filter(t, gs.get_dataset()[0], alpha_l, alpha_h, gain_k)
-    if th_dy is not None:
-        th_detection_dy = compute_threshold(dyy, th_dy)
+    if th_dy_multiplier is not None:
+        th_detection_dy = compute_threshold(dyy, th_dy_multiplier)
     else:
         th_detection_dy = 0
-    if th_dy is not None:
-        th_detection_d2y = compute_threshold(d2yy, th_d2y)
+    if th_d2y_multiplier is not None:
+        th_detection_d2y = compute_threshold(d2yy, th_d2y_multiplier)
     else:
         th_detection_d2y = 0
 
-    with open(out, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['alpha_l', 'alpha_h', 'gain','th_dy', 'th_d2y'])  # Header
-        writer.writerow([alpha_l, alpha_h, gain_k, th_detection_dy, th_detection_d2y])  # Data
+    return th_detection_dy, th_detection_d2y
 
 
 def read_time_param(csv_file):
@@ -46,12 +43,12 @@ def read_time_param(csv_file):
     return params  # Return the parameters as a dictionary
 
 
-def save_trap_params(m, l, scaling_factor, std, out='trap_filt_params.csv'):
+def save_trap_params(scaling_factor, std, out='trap_filt_params.csv'):
 
     with open(out, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['m', 'l', 'computed_scaling_factor', 'Variance'])  # Header
-        writer.writerow([m, l, scaling_factor, std])  # Data
+        writer.writerow(['Average', 'Variance'])  # Header
+        writer.writerow([scaling_factor, std])  # Data
 
 
 def read_trap_params(csv_file):

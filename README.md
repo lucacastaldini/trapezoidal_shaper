@@ -23,3 +23,17 @@ $ source /path/to/gammasim_env/bin/activate
 ## visualize waveform model 
 
 https://www.desmos.com/calculator/svx1kmywcb
+
+## trapezoidal shaper reference:
+https://drive.google.com/drive/folders/1kx1BpFW2vLYtW8lw7NBKV7afeeUhIyzG
+
+## vscode configuration:
+{
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "</path/to>/gammalib/gammasim/:</path/to>/gammalib/area_eval/"
+    },
+    "python.analysis.extraPaths": [
+        "</path/to>/gammalib/gammasim/",
+        "</path/to>/gammalib/area_eval/"
+    ]
+}

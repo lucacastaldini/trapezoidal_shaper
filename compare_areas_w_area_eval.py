@@ -1,14 +1,14 @@
 import sys
 import csv
 
-from tps import compute_and_separate_trap, plot_traps, trap_filter, exp_func, find_area
+from implementation.tps import compute_and_separate_trap, plot_traps, trap_filter, exp_func, find_area
 import numpy as np
 import matplotlib.pyplot as plt
 
 from gammasim import GammaSim
 import area_eval
 
-config_file="config_w_noise.json"
+config_file="config_method2-w-noise.json"
 save_output_fig="out_no_noise/"
 saturation = False
 gammasim = GammaSim(config_file)
