@@ -1,5 +1,5 @@
 
-from tps import trap_filter, exp_func
+from implementation.tps import trap_filter, exp_func
 import numpy as np
 import matplotlib.pyplot as plt
 

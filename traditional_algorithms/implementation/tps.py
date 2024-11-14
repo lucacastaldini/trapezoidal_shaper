@@ -196,43 +196,49 @@ def compute_threshold(dyy, th_dy):
 
     return th_detection_dy
 
-def detect_waveforms(m, l, dyy, d2yy, der_ord_detection, th_detection_dy=None, th_detection_d2y=None):
-
+def detect_waveforms(dyy, d2yy, der_ord_detection, th_detection_dy=None, th_detection_d2y=None, zero_crossing_window=5):
+    # print("ord detection: ", der_ord_detection)
     if not der_ord_detection in [1,2]:
         raise ValueError(f"Detection method inserted: {der_ord_detection} is not 1 or 2")
 
     if der_ord_detection == 1:
-        candidate_peaks=find_peaks(x=dyy, height=th_detection_dy, prominence=[.1] )
+        candidate_peaks=find_peaks(x=dyy, height=th_detection_dy, prominence=[1000], distance= 50  )
 
     elif der_ord_detection == 2:
         candidate_peaks=find_peaks(x=d2yy, height=th_detection_d2y )
 
-    print("candidate_peaks: ", candidate_peaks)
+    # print("candidate_peaks: ", candidate_peaks)
 
     candidate_peaks = candidate_peaks[0]
 
-    # Find zero-crossings using linear interpolation
     t_zeros = []
-    z_cr_win=5
-    extra_int_window=5
-    ftd_s=0
-    ftd_e=3
-    top_mean_windows=[]
-    tp_int_windows=[]
+    half_window=round(zero_crossing_window/2)
+
     if len(candidate_peaks)>0:
         for peak in candidate_peaks:
-            for i in range(peak-z_cr_win, peak+z_cr_win):
+            for i in range(peak-half_window, peak+half_window):
                 if np.sign(d2yy[i]) != np.sign(d2yy[i + 1]):
                     
                     # Linear interpolation to estimate zero-crossing point
                     t_zeros.append(peak)
-                    window=[peak+l+ftd_s, peak+l+m-ftd_e]
-                    int_start=[peak-extra_int_window, peak+m+2*l+extra_int_window]
-                    top_mean_windows.append(window)
-                    tp_int_windows.append(int_start)
-                    print("t0 detected: : ", t_zeros)
-                    print("window in : ", window)
+                    # print("t0 detected: : ", t_zeros)
                     break
+
+    return t_zeros
+
+def compute_height_int_windows(t_zeros, l, m, ftd_s, ftd_e, int_extension):
+    # Find zero-crossings using linear interpolation
+    top_mean_windows=[]
+    tp_int_windows=[]
         
-    print("found peaks in: ", t_zeros)
-    return t_zeros, top_mean_windows, tp_int_windows
+    # print("found peaks in: ", t_zeros)
+    if len(t_zeros)==0:
+        print("Warning: No peaks found")
+    else:  
+        for t in t_zeros:
+            window=[t+l+ftd_s, t+l+m-ftd_e]
+            int_start=[t-int_extension, t+m+2*l+int_extension]
+            top_mean_windows.append(window)
+            tp_int_windows.append(int_start)
+            # print("window in : ", window)
+    return top_mean_windows, tp_int_windows

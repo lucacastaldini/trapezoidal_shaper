@@ -1,5 +1,5 @@
 
-from tps import compute_and_separate_trap, plot_traps, trap_filter, exp_func
+from implementation.tps import compute_and_separate_trap, plot_traps, trap_filter, exp_func
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks, find_peaks_cwt
