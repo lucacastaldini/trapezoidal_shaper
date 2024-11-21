@@ -24,6 +24,8 @@ $ source /path/to/gammasim_env/bin/activate
 
 https://www.desmos.com/calculator/svx1kmywcb
 
+https://www.desmos.com/calculator/u1dtk6dqgx
+
 ## trapezoidal shaper reference:
 https://drive.google.com/drive/folders/1kx1BpFW2vLYtW8lw7NBKV7afeeUhIyzG
 
