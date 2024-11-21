@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 from configuration.model.config_model import load_config
 from gammasim import GammaSim
 
-from implementation.tps import compute_height_int_windows, detect_waveforms, find_base_mean, find_tps_height_area, time_filter, trap_filter
+from implementation.tps import compute_height_window, detect_waveforms, find_base_mean, find_tps_height, time_filter, trap_filter
 from tools.plot_tools import plot_input_trap_time_waveforms
 
 cmap = plt.get_cmap('viridis')  # Use a colormap (e.g., 'viridis')
 
 # Specifica il nome del file di configurazione
 
+config_file_name = "config_tps_config_method2-w-noise.json"  
 # config_file_name = "config_tps_config_method2-w-noise.json"  
-config_file_name = "config_tps_config_method2-no-noise.json"  
 
 ####
 
@@ -31,9 +31,9 @@ print(vv.shape)
 
 dd = gammasim.get_sampling_time()
 M = gammasim.get_params()[0][0]['tau2']
+print(f"Sampling: {dd}s, decay-time constant: {M}")
 H1= gammasim.get_params()[0][0]['gamma']
 t1 = gammasim.get_params()[0][0]['t_start']
-
 ### __init__
 N = vv.shape[0]
 nn = np.arange(0, N)
@@ -62,15 +62,14 @@ t_zeros = detect_waveforms(
     der_ord_detection=cfg.time_filter.dev_ord_det, 
     th_detection_dy=cfg.time_filter.th_dy, 
     th_detection_d2y=cfg.time_filter.th_d2y,
-    zero_crossing_window=10)
+    zero_crossing_window=cfg.time_filter.zero_cr_window)
 
-top_mean_w, tp_int_w = compute_height_int_windows(
+top_mean_w = compute_height_window(
     t_zeros, 
     m=cfg.trap_filter.m, 
     l=cfg.trap_filter.l, 
     ftd_s=cfg.trap_filter.ftd_s, 
     ftd_e=cfg.trap_filter.ftd_e, 
-    int_extension=cfg.trap_filter.int_w
     )
 
 print(f"t zeros: {t_zeros}")
@@ -85,16 +84,17 @@ if len(t_zeros)>0:
         if first_iteration:
             raise ValueError(f"Error during first iteration: {str(e)}") from e
     j=0
-    for w, t in zip(top_mean_w, tp_int_w):
-        height, _ = find_tps_height_area(base_mean=base_mean, w=w, t=t, s_vals_scaled=scaled_tps_out, dt=dd)
+    for w in top_mean_w:
+        height = find_tps_height(base_mean=base_mean, w=w, s_vals_scaled=scaled_tps_out)
         trap_heights.append(height)
 
     
 else:
     print("warning: no detection")
 
-
-print(trap_heights)
+print("base mean:  ", base_mean)
+print("height: ", trap_heights)
+print("height: ", gammasim.get_heights()[0])
 
 ################ #
 

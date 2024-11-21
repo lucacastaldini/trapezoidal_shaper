@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from configuration.model.config_model import Config
 from implementation.filt_param_handlers import read_trap_params, save_trap_params
 from implementation.tps import (
-    compute_height_int_windows, detect_waveforms, find_base_mean, 
-    find_tps_height_area, time_filter, trap_filter, 
+    compute_height_window, detect_waveforms, find_base_mean, find_tps_height, 
+    time_filter, trap_filter, 
     update_ma_signal, update_recursive_avg, update_recursive_std
 )
 from tools.plot_tools import plot_input_trap_time_waveforms
@@ -68,13 +68,12 @@ class TrapezoidalShaperAlg:
         )
 
         # Calcolo altezza e finestra di integrazione
-        top_mean_w, tp_int_w = compute_height_int_windows(
+        top_mean_w = compute_height_window(
             t_zeros,
             m=self.config.trap_filter.m,
             l=self.config.trap_filter.l,
             ftd_s=self.config.trap_filter.ftd_s,
-            ftd_e=self.config.trap_filter.ftd_e,
-            int_extension=self.config.trap_filter.int_w
+            ftd_e=self.config.trap_filter.ftd_e
         )
 
         trap_heights = []
@@ -88,19 +87,19 @@ class TrapezoidalShaperAlg:
             try:
                 new_base = find_base_mean(scaled_tps_out, t_zeros[0], self.config.trap_filter.m)
                 if self.first_iteration:
-                    print("new_base ", new_base)
+                    # print("new_base ", new_base)
                     self.base_mean = new_base
                     self.first_iteration = False
                 else:
                     self.base_mean = update_ma_signal(self.base_mean, new_base, 0.001)
-                print(self.base_mean)
+                # print(self.base_mean)
             except ValueError as e:
                 raise ValueError(f"Error during first iteration: {str(e)}") from e
 
-            for w, t in zip(top_mean_w, tp_int_w):
-                height, _ = find_tps_height_area(
-                    base_mean=self.base_mean, w=w, t=t,
-                    s_vals_scaled=scaled_tps_out, dt=self.sampling_time
+            for w in top_mean_w:
+                height = find_tps_height(
+                    base_mean=self.base_mean, w=w,
+                    s_vals_scaled=scaled_tps_out
                 )
                 trap_heights.append(height/self.mean_computed_scaling)
         else:
@@ -199,7 +198,7 @@ class TrapezoidalShaperAlg:
                 
         
         
-        self.mean_computed_scaling = avg_h_a_ratio
+        # self.mean_computed_scaling = avg_h_a_ratio
         if out is not None:
             save_trap_params(avg_h_a_ratio, sigmaq_h_a_ratio, out=out)
 
