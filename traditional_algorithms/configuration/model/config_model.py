@@ -42,25 +42,28 @@ def load_config(file_name: str) -> Config:
     config = Config(**data)
     return config
 
-# Definisci i parametri di configurazione
-cfg_instance = Config(
-    gammasim_cfg="config_method2-w-noise.json",
-    time_filter=TimeFilterParams(
-        alpha_l=0.002,
-        alpha_h=0.9,
-        gain_k=10e-5,
-        in_cond=[100],
-        th_dy=None,
-        th_d2y=None,
-        dev_ord_det=1,
-        window_sz=15,
-        zero_cr_window=10
-    ),
-    trap_filter=TrapParams(
-        m=60,
-        l=40,
-        ftd_s=20,
-        ftd_e=0,
-        int_w=10
+def init_config(config_path:str = "config_method2-w-noise.json", 
+                bkg_level:int = 100):
+    # Definisci i parametri di configurazione
+    cfg_instance = Config(
+        gammasim_cfg=config_path,
+        time_filter=TimeFilterParams(
+            alpha_l=0.002,
+            alpha_h=0.9,
+            gain_k=10e-5,
+            in_cond=[bkg_level],
+            th_dy=None,
+            th_d2y=None,
+            dev_ord_det=1,
+            window_sz=15,
+            zero_cr_window=10
+        ),
+        trap_filter=TrapParams(
+            m=60,
+            l=40,
+            ftd_s=20,
+            ftd_e=0,
+            int_w=10
+        )
     )
-)
+    return cfg_instance
