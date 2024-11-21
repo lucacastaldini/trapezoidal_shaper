@@ -1,10 +1,12 @@
 import os
 import sys
+sys.path.append('/home/gamma/workspace/gammalib/gammasim')
+sys.path.append('/home/gamma/workspace/trapezoidal_shaper')
 import numpy as np
 import matplotlib.pyplot as plt
 from gammasim import GammaSim
 import json
-from configuration.model.config_model import load_config, cfg_instance
+from configuration.model.config_model import load_config, init_config
 from implementation.filt_param_handlers import find_time_filter_params
 import argparse
 
@@ -28,6 +30,7 @@ print(f"Percorso configurazione: {args.config_path}")
 print(f"Valore th_dy: {args.th_dy}")
 print(f"Valore th_d2y: {args.th_d2y}")
 
+print(args.config_path)
 config_file=args.config_path
 saturation = False
 gammasim = GammaSim(config_file)
@@ -48,27 +51,36 @@ N = vv.shape[0]
 nn = np.arange(0, N)
 tt = nn * dd
 
-cfg_name_extracted=args.config_path.split(".")[0]
-file_name = f"config_tps_{cfg_name_extracted}.json"
+file_name      = os.path.basename(args.config_path)
+dir_name       = os.path.dirname(args.config_path)
+configtps_path = os.path.join(dir_name, f'config_tps_{file_name}')
 
-if os.path.exists(file_name):
-    cfg = load_config(file_name)
-    print("Updating existent config: ", file_name)
+cfg = None
+if os.path.exists(configtps_path):
+    cfg = load_config(configtps_path)
+    print("Updating existent config: ", configtps_path)
 else:
-    cfg = cfg_instance
-    print("Creting new config from default: ", file_name)
+    with open(args.config_path, 'r') as configfile:
+        cfgsim = json.load(configfile)
+        # initialize config trapz object
+        cfg = init_config(args.config_path,
+                          cfgsim['bkgbase_level'])
+    print("Creting new config from default: ", configtps_path)
 
 ################ Estimate trigger thresholds
 ## write to csv filter params and detection thresholds
-cfg.time_filter.th_dy, cfg.time_filter.th_d2y = find_time_filter_params(gammasim, tt, cfg.time_filter.alpha_l, cfg.time_filter.alpha_h, cfg.time_filter.gain_k, th_dy_multiplier=args.th_dy, th_d2y_multiplier=args.th_d2y)
-
-# Salva la configurazione in un file JSON
-with open("config_tps_"+cfg.gammasim_cfg.split('.')[0]+".json", "w") as f:
-    json.dump(cfg.model_dump(), f, indent=4)
+cfg.time_filter.th_dy, cfg.time_filter.th_d2y = find_time_filter_params(
+    gammasim, 
+    tt, 
+    cfg.time_filter.alpha_l, 
+    cfg.time_filter.alpha_h, 
+    cfg.time_filter.gain_k, 
+    th_dy_multiplier=args.th_dy, th_d2y_multiplier=args.th_d2y)
 
 # Ottieni il percorso della directory dello script
 script_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(script_dir, file_name)
+file_path = os.path.join(script_dir, f'config_tps_{file_name}')
+print(f'============> mori {file_path} ')
 
 # Salva la configurazione in un file JSON nella directory dello script
 with open(file_path, "w") as f:
