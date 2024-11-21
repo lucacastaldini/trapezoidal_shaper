@@ -22,8 +22,6 @@ $ source /path/to/gammasim_env/bin/activate
 
 ## visualize waveform model 
 
-https://www.desmos.com/calculator/svx1kmywcb
-
 https://www.desmos.com/calculator/u1dtk6dqgx
 
 ## trapezoidal shaper reference:
