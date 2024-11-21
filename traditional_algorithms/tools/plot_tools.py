@@ -95,13 +95,15 @@ def plot_io(tt, input, output):
 
     plt.show()
 
-def plot_input_trap_time_waveforms(tt, dd, vv, s_vals_scaled, top_mean_windows, trap_heights, base_mean, th_detection_dy, th_detection_d2y, yy_l, yy_h, dyy, d2yy, alpha_l, alpha_h):
+def plot_input_trap_time_waveforms(tt, dd, vv, s_vals_scaled, top_mean_windows, trap_heights, base_mean, th_detection_dy, th_detection_d2y, yy_l, yy_h, dyy, d2yy, alpha_l, alpha_h, t_zeros):
 
     # Create subplots with 5 rows (for vv and 4 outputs) and 1 column
     fig, axs = plt.subplots(nrows=6, ncols=1, figsize=(10, 10), sharex=True)
 
     # Plot original signal vv
     axs[0].plot(tt, vv, label='input vv')
+    for ttino in t_zeros:
+        axs[0].axvline(x=t_zeros, linestyle="--", color="black", label=f"tzero: {ttino}")
     axs[0].set_ylabel('Amplitude input')
     axs[0].grid()
     

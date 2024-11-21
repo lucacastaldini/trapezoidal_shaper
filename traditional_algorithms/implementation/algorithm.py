@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from exp import first_ord_exp_decay
 from configuration.model.config_model import Config
 from implementation.filt_param_handlers import read_trap_params, save_trap_params
 from implementation.tps import (
@@ -16,6 +17,8 @@ class TrapezoidalShaperAlg:
         self.sampling_time = sampling_time
         self.M = M
 
+        self.jitter_p=10
+
         # Inizializzazione variabili per i risultati
         self.trap_area = []
         self.base_mean = 0
@@ -30,7 +33,8 @@ class TrapezoidalShaperAlg:
         # Dataset numpy per salvare i risultati
         self.scaled_tps_out_data = np.zeros((self.dataset.shape[0], self.N))
         self.top_mean_w_data = np.zeros(self.dataset.shape[0], dtype=object)
-        self.trap_heights_data = np.zeros(self.dataset.shape[0], dtype=object)
+        self.t_zeros = np.zeros((self.dataset.shape[0], 1))
+        self.trap_heights_data = np.zeros((self.dataset.shape[0], 1))
         self.y_l_data = np.zeros((self.dataset.shape[0], self.N))
         self.y_h_data = np.zeros((self.dataset.shape[0], self.N))
         self.dy_data = np.zeros((self.dataset.shape[0], self.N))
@@ -108,18 +112,20 @@ class TrapezoidalShaperAlg:
         # Salva i risultati nel dataset numpy
         self.scaled_tps_out_data[n, :] = scaled_tps_out/self.mean_computed_scaling
         self.top_mean_w_data[n] = top_mean_w
-        self.trap_heights_data[n] = trap_heights
+        # print(trap_heights)
+        self.trap_heights_data[n] = np.array(trap_heights)[:]
         self.y_l_data[n, :] = y_l
         self.y_h_data[n, :] = y_h
         self.dy_data[n, :] = dy
         self.d2y_data[n, :] = d2y
+        self.t_zeros[n] = np.array(t_zeros)-self.jitter_p
 
         if plot:
             plot_input_trap_time_waveforms(
                 self.nn, 1, vv,
                 scaled_tps_out/self.mean_computed_scaling, top_mean_w, trap_heights, self.base_mean/self.mean_computed_scaling,
                 self.config.time_filter.th_dy, None, y_l, y_h, dy, d2y,
-                self.config.time_filter.alpha_l, self.config.time_filter.alpha_h
+                self.config.time_filter.alpha_l, self.config.time_filter.alpha_h, self.t_zeros[n]
             )
 
         return trap_heights
@@ -149,11 +155,14 @@ class TrapezoidalShaperAlg:
             self.nn, 1, vv,
             scaled_tps_out, top_mean_w, trap_heights, self.base_mean,
             self.config.time_filter.th_dy, None, y_l, y_h, dy, d2y,
-            self.config.time_filter.alpha_l, self.config.time_filter.alpha_h
+            self.config.time_filter.alpha_l, self.config.time_filter.alpha_h, self.t_zeros[n]
         )
+    
+    def fitted_wf(self, n):
 
+        return first_ord_exp_decay(self.tt, np.ones_like(self.tt)*self.base_mean, self.t_zeros[n], self.trap_heights_data[n], )
 
-    def find_area_gain(self, sim_areas, out=None):
+    def find_gain(self, sim_gammas, out=None):
         ## recursive formula to update mean value and variance: https://math.stackexchange.com/questions/374881/recursive-formula-for-variance
         avg_h_a_ratio = 0
         sigmaq_h_a_ratio = 0
@@ -162,7 +171,7 @@ class TrapezoidalShaperAlg:
             try:
                 heights=self._compute(ii)
                 for height in heights: 
-                    a_sim = sim_areas[n]
+                    a_sim = sim_gammas[n]
                     # print(f"height: {height}, sim area:{a_sim}")
 
                     # increment idx
@@ -198,7 +207,7 @@ class TrapezoidalShaperAlg:
                 
         
         
-        # self.mean_computed_scaling = avg_h_a_ratio
+        self.mean_computed_scaling = avg_h_a_ratio
         if out is not None:
             save_trap_params(avg_h_a_ratio, sigmaq_h_a_ratio, out=out)
 

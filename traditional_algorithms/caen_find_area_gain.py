@@ -26,10 +26,10 @@ heights=gammasim.get_heights()
 alg = TrapezoidalShaperAlg(dataset=ds, config=cfg, sampling_time=sampling_time, M=M)
 
 csv_file="notebook_values.cfg"
-trap_heights_before = alg.find_area_gain(heights, out=csv_file)
+trap_heights_before = alg.find_gain(heights, out=csv_file)
 print("Applying scaling")
 alg.set_mean_computed_scaling_from_file(csv=csv_file)
-trap_heights_after = alg.find_area_gain(heights)
+trap_heights_after = alg.find_gain(heights)
 
 if trap_heights_after > 0.9 and trap_heights_after < 1.1:
     print("Trap scaling successful!!!")

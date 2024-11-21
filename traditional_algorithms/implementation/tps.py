@@ -213,7 +213,7 @@ def detect_waveforms(dyy, d2yy, der_ord_detection, th_detection_dy=None, th_dete
     elif der_ord_detection == 2:
         candidate_peaks=find_peaks(x=d2yy, height=th_detection_d2y )
 
-    print("candidate_peaks: ", candidate_peaks)
+    # print("candidate_peaks: ", candidate_peaks)
 
     candidate_peaks = candidate_peaks[0]
 
@@ -223,12 +223,12 @@ def detect_waveforms(dyy, d2yy, der_ord_detection, th_detection_dy=None, th_dete
     if len(candidate_peaks)>0:
         for peak in candidate_peaks:
             for i in range(peak-half_window, peak+half_window):
-                print(half_window)
+                # print(half_window)
                 if np.sign(d2yy[i]) != np.sign(d2yy[i + 1]):
                     
                     # Linear interpolation to estimate zero-crossing point
                     t_zeros.append(peak)
-                    print("t0 detected: : ", t_zeros)
+                    # print("t0 detected: : ", t_zeros)
                     break
 
     return t_zeros

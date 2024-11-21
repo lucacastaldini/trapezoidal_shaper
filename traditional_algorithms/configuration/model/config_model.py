@@ -34,9 +34,12 @@ class Config(BaseModel):
 # Funzione per caricare la configurazione da un file JSON
 def load_config(file_name: str) -> Config:
     # Ottieni il percorso della directory parente dello script
+    file_name      = os.path.basename(file_name)
+    print(file_name)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)  # Ottieni la directory parente
     file_path = os.path.join(parent_dir, file_name)
+    print(file_name)
 
     # Leggi il file JSON e carica i dati
     with open(file_path, "r") as f:
