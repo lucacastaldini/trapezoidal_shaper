@@ -19,8 +19,8 @@
         "ftd_s": 20,
         "ftd_e": 30
     },
-    "charge_int_filter":{
-        "predelay":100,
-        "width":400
+    "charge_int_filter": {
+        "predelay": 100,
+        "width": 400
     }
 }
