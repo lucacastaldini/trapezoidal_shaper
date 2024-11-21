@@ -9,7 +9,7 @@
     "gauss_maxrate": 0.00,
     "gauss_std": "none", 
     "gauss_mean": "none",
-    "bkgbase_level": 100,
+    "bkgbase_level": 0,
     "gamma_min_wtSat": -9000,
     "gamma_max_wtSat": -5000,
     "gamma_min_noSat": 6000,

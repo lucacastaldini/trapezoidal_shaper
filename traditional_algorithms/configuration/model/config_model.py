@@ -15,17 +15,21 @@ class TimeFilterParams(BaseModel):
     zero_cr_window: int = Field(..., description="n samples where to look for zero cross after candidate peak")
     window_sz: int = Field(..., description="Smoothing window for thd2y")
 
-class TrapParams(BaseModel):
+class TrapFiltParams(BaseModel):
     m: int = Field(..., description="Flat top (samples)")
     l: int = Field(..., description="Slope (samples)")
     ftd_s: int = Field(..., description="Flat top delay to start (samples). height_window_start = trap_flat_start+ftd_s")
     ftd_e: int = Field(..., description="Flat top delay before end (samples). height_window_end = trap_flat_end-ftd_e")
-    int_w: int = Field(..., description="Extra window samples to integrate signal. integration_window = [trap_start-int_w, trap_end+int_w]")
+    
+class ChargeIntParams(BaseModel):
+    predelay: int = Field(..., description="Samples to integrate signal before tstart. t_start_integration = t_start-predelay")
+    width: int = Field(..., description="Samples to end integrate signal. t_stop_integration = t_start-predelay+width")
 
 class Config(BaseModel):
     gammasim_cfg: str = Field(..., description="Path to configuration file for simulator")
     time_filter: TimeFilterParams
-    trap_filter: TrapParams
+    trap_filter: TrapFiltParams
+    charge_int_filter: ChargeIntParams
 
 # Funzione per caricare la configurazione da un file JSON
 def load_config(file_name: str) -> Config:
@@ -58,12 +62,16 @@ def init_config(config_path:str = "config_method2-w-noise.json",
             window_sz=15,
             zero_cr_window=10
         ),
-        trap_filter=TrapParams(
-            m=60,
-            l=40,
-            ftd_s=20,
-            ftd_e=0,
-            int_w=10
+        trap_filter=TrapFiltParams(
+        m=60,
+        l=40,
+        ftd_s=20,
+        ftd_e=0
+        ),
+        charge_int_filter=ChargeIntParams(
+            predelay=100,
+            width=400
         )
     )
     return cfg_instance
+

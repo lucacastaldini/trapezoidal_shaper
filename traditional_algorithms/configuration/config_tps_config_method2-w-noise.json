@@ -14,10 +14,13 @@
         "window_sz": 15
     },
     "trap_filter": {
-        "m": 110,
+        "m": 210,
         "l": 30,
         "ftd_s": 20,
-        "ftd_e": 0,
-        "int_w": 10
+        "ftd_e": 20
+    },
+    "charge_int_filter": {
+        "predelay": 100,
+        "width": 400
     }
 }

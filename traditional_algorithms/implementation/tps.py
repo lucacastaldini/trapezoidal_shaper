@@ -6,6 +6,9 @@ def exp_func(tt, H, t_shift, M):
     
     return H * np.exp(-(tt - t_shift) / M) * (tt > t_shift)
 
+def _gain_corrector(M, l):
+    return 1/(M*l)
+
 def trap_filter(M, dt, v, m, l):
     """
     Computes Discrete Trapezoidal shaper based on the method described in:
@@ -55,7 +58,7 @@ def trap_filter(M, dt, v, m, l):
 
     s_vals = lfilter(N3, D3, p_vals + dml_vals * M/dt)
 
-    gain_corrector = 1/(M/dt*l)
+    gain_corrector = _gain_corrector(M/dt,l)
 
     return dml_vals, p_vals, s_vals, s_vals*gain_corrector
 
@@ -139,12 +142,14 @@ def update_ma_signal(old_mean, new_value, alpha):
     return (1 - alpha) * old_mean + alpha * new_value
         
 
-def find_tps_height_area(base_mean, w, t, s_vals_scaled, dt):
+def find_tps_height(base_mean, w, s_vals_scaled):
         
-    height = np.mean(s_vals_scaled[w[0]:w[1]]) - base_mean
-    area   = np.sum(s_vals_scaled[t[0]:t[1]])*dt - base_mean
+    return np.mean(s_vals_scaled[w[0]:w[1]]) - base_mean
 
-    return height, area
+def find_gated_area(base_mean, t, input, dt):
+        
+    return np.sum(input[t[0]:t[1]])*dt - base_mean
+
     
 def extract_trap(s, start, end):
     x=np.zeros_like(s)
@@ -218,6 +223,7 @@ def detect_waveforms(dyy, d2yy, der_ord_detection, th_detection_dy=None, th_dete
     if len(candidate_peaks)>0:
         for peak in candidate_peaks:
             for i in range(peak-half_window, peak+half_window):
+                print(half_window)
                 if np.sign(d2yy[i]) != np.sign(d2yy[i + 1]):
                     
                     # Linear interpolation to estimate zero-crossing point
@@ -227,19 +233,31 @@ def detect_waveforms(dyy, d2yy, der_ord_detection, th_detection_dy=None, th_dete
 
     return t_zeros
 
-def compute_height_int_windows(t_zeros, l, m, ftd_s, ftd_e, int_extension):
-    # Find zero-crossings using linear interpolation
+def compute_height_window(t_zeros, l, m, ftd_s, ftd_e):
     top_mean_windows=[]
+        
+    # print("found peaks in: ", t_zeros)
+    if len(t_zeros)==0:
+        print("Warning: No peaks present")
+    else:  
+        after_t=l+ftd_s
+        before_end=l+m-ftd_e
+        for t in t_zeros:
+            window=[t+after_t, t+before_end]
+            top_mean_windows.append(window)
+            # print("window in : ", window)
+    return top_mean_windows
+
+def compute_int_window(t_zeros, pre_delay, width):
     tp_int_windows=[]
         
     # print("found peaks in: ", t_zeros)
     if len(t_zeros)==0:
-        print("Warning: No peaks found")
+        print("Warning: No peaks present")
     else:  
+        after_t = -pre_delay+width
         for t in t_zeros:
-            window=[t+l+ftd_s, t+l+m-ftd_e]
-            int_start=[t-int_extension, t+m+2*l+int_extension]
-            top_mean_windows.append(window)
-            tp_int_windows.append(int_start)
+            window=[t-pre_delay, t+after_t]
+            tp_int_windows.append(window)
             # print("window in : ", window)
-    return top_mean_windows, tp_int_windows
+    return tp_int_windows

@@ -31,6 +31,51 @@ def plot_traps(tt, input, out_scaled, peaks_signal, t_zeros, t_end):
 
     plt.show()
 
+def plot_several(tt, input, out_scaled, peaks_signal, t_zeros, t_end, tau1, nominal_value, sigma):
+    """
+    Plotta input, out_scaled e informazioni aggiuntive su una figura.
+    Ogni array in out_scaled avrà una label associata al valore corrispondente di tau1.
+    
+    Args:
+    tt: Lista o array di tempi.
+    input: Array di input da tracciare.
+    out_scaled: Lista di array, ogni array sarà tracciato separatamente.
+    peaks_signal: Array opzionale per picchi (non usato qui).
+    t_zeros: Lista di istanti per le linee verticali di t_zeros.
+    t_end: Lista di istanti per le linee verticali di t_end.
+    tau1: Lista di valori associati a out_scaled.
+    """
+    # Traccia l'array 'input'
+    for i, tau, ss in zip(input, tau1, sigma):
+        plt.plot(tt, i, label=f'input (tau1: {tau}, sigma: {ss})', linestyle="--",linewidth=1)
+
+    # Traccia ogni array in out_scaled con il corrispondente tau1
+    for s, tau, ss in zip(out_scaled, tau1, sigma):
+        plt.plot(tt, s, label=f's_vals (tau1: {tau}, sigma: {ss})', linewidth=1)
+
+    # Traccia le linee verticali t_zeros e t_end
+    if t_zeros is not None:
+        for i in t_zeros:
+            plt.axvline(x=i, label=f"t0: {i}", linestyle="--", color='g')
+    if t_end is not None:
+        for i in t_end:
+            plt.axvline(x=i, label=f"t0_end: {i}", linestyle="--", color='r')
+    plt.axhline(y=nominal_value, label=f"nominal value: {nominal_value}", linestyle="--", color="red")
+
+    # Imposta etichette e titolo
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.title("s_vals and vv vs. Time")
+
+    # Aggiungi legenda
+    plt.legend()
+
+    # Mostra griglia
+    plt.grid(True)
+
+    # Mostra il grafico
+    plt.show()
+
 def plot_io(tt, input, output):
     # Plot vv
     # plt.plot(tt, peaks_signal, label='dml_vals', color='r', linewidth=2)

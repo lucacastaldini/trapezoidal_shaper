@@ -10,14 +10,17 @@
         "th_dy": 15432.336840189751,
         "th_d2y": 48515526534.46768,
         "dev_ord_det": 1,
-        "zero_cr_window": 10,
+        "zero_cr_window": 200,
         "window_sz": 15
     },
     "trap_filter": {
         "m": 110,
         "l": 30,
         "ftd_s": 20,
-        "ftd_e": 0,
-        "int_w": 10
+        "ftd_e": 30
+    },
+    "charge_int_filter":{
+        "predelay":100,
+        "width":400
     }
 }
