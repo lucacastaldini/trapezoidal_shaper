@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gammasim import GammaSim
 import json
-from configuration.model.config_model import load_config, init_config
+from model.config_model import load_config, init_config
 from implementation.filt_param_handlers import find_time_filter_params
 import argparse
 
@@ -51,21 +51,25 @@ N = vv.shape[0]
 nn = np.arange(0, N)
 tt = nn * dd
 
-file_name      = os.path.basename(args.config_path)
-dir_name       = os.path.dirname(args.config_path)
-configtps_path = os.path.join(dir_name, f'config_tps_{file_name}')
+absolute_path = os.path.abspath(args.config_path)
+file_name      = os.path.basename(absolute_path)
+dir_name       = os.path.dirname(absolute_path)
+# configtps_path = os.path.join(dir_name, f'config_tps_{file_name}')
 
+config_script_dir = os.path.dirname(os.path.abspath(__file__))
+config_tps_file_path = os.path.join(config_script_dir, f'config_tps_{file_name}')
+print("CONFIGGGGG:", config_tps_file_path)
 cfg = None
-if os.path.exists(configtps_path):
-    cfg = load_config(configtps_path)
-    print("Updating existent config: ", configtps_path)
+if os.path.exists(config_tps_file_path):
+    cfg = load_config(config_tps_file_path)
+    print("Updating existent config: ", config_tps_file_path)
 else:
     with open(args.config_path, 'r') as configfile:
         cfgsim = json.load(configfile)
         # initialize config trapz object
         cfg = init_config(args.config_path,
                           cfgsim['bkgbase_level'])
-    print("Creting new config from default: ", configtps_path)
+    print("Creting new config from default: ", config_tps_file_path)
 
 ################ Estimate trigger thresholds
 ## write to csv filter params and detection thresholds
@@ -78,13 +82,12 @@ cfg.time_filter.th_dy, cfg.time_filter.th_d2y = find_time_filter_params(
     th_dy_multiplier=args.th_dy, th_d2y_multiplier=args.th_d2y)
 
 # Ottieni il percorso della directory dello script
-script_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(script_dir, f'config_tps_{file_name}')
-print(f'============> mori {file_path} ')
+
+print(f'============> mori {config_tps_file_path} ')
 
 # Salva la configurazione in un file JSON nella directory dello script
-with open(file_path, "w") as f:
+with open(config_tps_file_path, "w") as f:
     json.dump(cfg.model_dump(), f, indent=4)
 
-print(f"File di configurazione salvato in: {file_path}")
+print(f"File di configurazione salvato in: {config_tps_file_path}")
 
