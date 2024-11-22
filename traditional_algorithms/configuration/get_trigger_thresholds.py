@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gammasim import GammaSim
 import json
-from model.config_model import load_config, init_config
+from model.config_model import load_config, cfg_default
 from implementation.filt_param_handlers import find_time_filter_params
 import argparse
 
@@ -67,8 +67,7 @@ else:
     with open(args.config_path, 'r') as configfile:
         cfgsim = json.load(configfile)
         # initialize config trapz object
-        cfg = init_config(args.config_path,
-                          cfgsim['bkgbase_level'])
+        cfg = cfg_default
     print("Creting new config from default: ", config_tps_file_path)
 
 ################ Estimate trigger thresholds
@@ -81,6 +80,10 @@ cfg.time_filter.th_dy, cfg.time_filter.th_d2y = find_time_filter_params(
     cfg.time_filter.gain_k, 
     th_dy_multiplier=args.th_dy, th_d2y_multiplier=args.th_d2y)
 
+### link config for reconstruction alg to gammasim config
+cfg.gammasim_cfg=absolute_path
+### update init cond for base mean estimation
+cfg.time_filter.in_cond=cfgsim['bkgbase_level']
 # Ottieni il percorso della directory dello script
 
 print(f'============> mori {config_tps_file_path} ')

@@ -49,16 +49,14 @@ def load_config(file_name: str) -> Config:
     config = Config(**data)
     return config
 
-def init_config(config_path:str = "config_method2-w-noise.json", 
-                bkg_level:int = 100):
-    # Definisci i parametri di configurazione
-    cfg_instance = Config(
-        gammasim_cfg=config_path,
+
+cfg_default = Config(
+        gammasim_cfg=None,
         time_filter=TimeFilterParams(
             alpha_l=0.002,
             alpha_h=0.9,
             gain_k=10e-5,
-            in_cond=[bkg_level],
+            in_cond=[0],
             th_dy=None,
             th_d2y=None,
             dev_ord_det=1,
@@ -76,5 +74,3 @@ def init_config(config_path:str = "config_method2-w-noise.json",
             width=400
         )
     )
-    return cfg_instance
-
