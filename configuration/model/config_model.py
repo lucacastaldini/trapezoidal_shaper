@@ -1,6 +1,7 @@
 # config_model.py
 import os
 import json
+from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -26,7 +27,7 @@ class ChargeIntParams(BaseModel):
     width: int = Field(..., description="Samples to end integrate signal. t_stop_integration = t_start-predelay+width")
 
 class Config(BaseModel):
-    gammasim_cfg: str = Field(..., description="Path to configuration file for simulator")
+    gammasim_cfg: Path = Field(..., description="Path to configuration file for simulator")
     time_filter: TimeFilterParams
     trap_filter: TrapFiltParams
     charge_int_filter: ChargeIntParams
@@ -51,7 +52,7 @@ def load_config(file_name: str) -> Config:
 
 
 cfg_default = Config(
-        gammasim_cfg=None,
+        gammasim_cfg="",
         time_filter=TimeFilterParams(
             alpha_l=0.002,
             alpha_h=0.9,
