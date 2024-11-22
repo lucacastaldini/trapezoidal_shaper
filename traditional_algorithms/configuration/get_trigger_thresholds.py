@@ -10,17 +10,31 @@ from model.config_model import load_config, cfg_default
 from implementation.filt_param_handlers import find_time_filter_params
 import argparse
 
+DEFAULT_TH_DY = 2.0
+DEFAULT_TH_D2Y = 0.2
+
 # Creazione dell'oggetto parser
 parser = argparse.ArgumentParser(description="Fissa le Threshold in base alla configurazione di Gammasim")
 
 # Argomento posizionale obbligatorio
 parser.add_argument('config_path', type=str, help="Percorso del file di configurazione gammasim")
 
-# Argomento opzionale con valore di default
-parser.add_argument('th_dy', type=float, nargs='?', default=4, help="Valore di th_dy (default: 0.1)")
+# Aggiungi gli argomenti con i valori di default dinamici
+parser.add_argument(
+    'th_dy', 
+    type=float, 
+    nargs='?', 
+    default=DEFAULT_TH_DY, 
+    help=f"Valore di th_dy (default: {DEFAULT_TH_DY})"
+)
+parser.add_argument(
+    'th_d2y', 
+    type=float, 
+    nargs='?', 
+    default=DEFAULT_TH_D2Y, 
+    help=f"Valore di th_d2y (default: {DEFAULT_TH_D2Y})"
+)
 
-# Argomento opzionale con valore di default
-parser.add_argument('th_d2y', type=float, nargs='?', default=0.2, help="Valore di th_d2y (default: 0.2)")
 
 # Parsing degli argomenti
 args = parser.parse_args()
@@ -64,10 +78,8 @@ if os.path.exists(config_tps_file_path):
     cfg = load_config(config_tps_file_path)
     print("Updating existent config: ", config_tps_file_path)
 else:
-    with open(args.config_path, 'r') as configfile:
-        cfgsim = json.load(configfile)
-        # initialize config trapz object
-        cfg = cfg_default
+    # initialize config trapz object
+    cfg = cfg_default
     print("Creting new config from default: ", config_tps_file_path)
 
 ################ Estimate trigger thresholds
@@ -83,7 +95,10 @@ cfg.time_filter.th_dy, cfg.time_filter.th_d2y = find_time_filter_params(
 ### link config for reconstruction alg to gammasim config
 cfg.gammasim_cfg=absolute_path
 ### update init cond for base mean estimation
-cfg.time_filter.in_cond=cfgsim['bkgbase_level']
+with open(args.config_path, 'r') as configfile:
+        cfgsim = json.load(configfile)
+
+cfg.time_filter.in_cond=[float(cfgsim['bkgbase_level'])]
 # Ottieni il percorso della directory dello script
 
 print(f'============> mori {config_tps_file_path} ')
