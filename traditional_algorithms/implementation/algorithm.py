@@ -106,19 +106,21 @@ class TrapezoidalShaperAlg:
                     s_vals_scaled=scaled_tps_out
                 )
                 trap_heights.append(height/self.mean_computed_scaling)
+            
+            # Salva i risultati nel dataset numpy
+            self.scaled_tps_out_data[n, :] = scaled_tps_out/self.mean_computed_scaling
+            self.trap_heights_data[n] = np.array(trap_heights)[:]
+            self.t_zeros[n] = np.array(t_zeros)-self.jitter_p
         else:
-            raise RuntimeError(f"Warning: No waveform detected at step {n}.")
-
+            # raise RuntimeError(f"Warning: No waveform detected at step {n}.")
+            print(f"Warning: No waveform detected at step {n}.")
         # Salva i risultati nel dataset numpy
-        self.scaled_tps_out_data[n, :] = scaled_tps_out/self.mean_computed_scaling
         self.top_mean_w_data[n] = top_mean_w
-        # print(trap_heights)
-        self.trap_heights_data[n] = np.array(trap_heights)[:]
         self.y_l_data[n, :] = y_l
         self.y_h_data[n, :] = y_h
         self.dy_data[n, :] = dy
         self.d2y_data[n, :] = d2y
-        self.t_zeros[n] = np.array(t_zeros)-self.jitter_p
+            
 
         if plot:
             plot_input_trap_time_waveforms(
