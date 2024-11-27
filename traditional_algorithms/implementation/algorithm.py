@@ -54,7 +54,11 @@ class TrapezoidalShaperAlg:
 
     def _compute(self, n, plot=False):
         vv = self.dataset[n]
-        
+        # NOTE: sottraendo il background base level, che può essere stimato come la media dei primi
+        #       50 steps (se non ci sono picchi prima di allora) la stabilità dei trapezi incrementa
+        #       sensibilmente.
+        bkg_levl = vv[:50].mean()
+        vv = vv - bkg_levl
         # Filtro del segnale
         y_l, y_h, dy, d2y = time_filter(
             self.tt, vv,
@@ -187,6 +191,30 @@ class TrapezoidalShaperAlg:
         print(f"Avg tp height - signal area ratio: {avg_h_a_ratio}")
         print(f"Variance of tp height - signal area ratio: {sigmaq_h_a_ratio}\n-------------------------------------\n")
 
+    def find_gain_with_std(self, values, out=None):
+        # Ottieni i dati da compute_all()
+        heights = self.compute_all()
+        # Sostituisci le liste vuote con 0
+        heights = np.array([h[0] if h else 0 for h in heights], dtype=float)
+        # Trova gli indici dei valori validi
+        idxs_nonzero = heights > 0
+        # Calcola i rapporti per gli indici validi
+        ratios = heights[idxs_nonzero] / values[idxs_nonzero]
+        # Calcola la media e la deviazione standard dei rapporti
+        mean_ratio = ratios.mean()
+        std_ratio = ratios.std()
+        # Applica una strategia per scalare i dati usando anche la deviazione standard
+        # Ad esempio, ponderando il gain
+        gain = mean_ratio + 1.65 * std_ratio  # Formula arbitraria, dipende dall'applicazione
+        gain = mean_ratio # Formula arbitraria, dipende dall'applicazione
+        #gain = mean_ratio  # Formula arbitraria, dipende dall'applicazione
+        # Salva il guadagno calcolato
+        self.mean_computed_scaling = gain
+        # Opzionale: restituisci anche la deviazione standard
+        if out == "full":
+            return gain, mean_ratio, std_ratio
+        return gain
+        
     def find_gain(self, sim_gammas, out=None):
         ## recursive formula to update mean value and variance: https://math.stackexchange.com/questions/374881/recursive-formula-for-variance
         if sim_gammas.ndim != 1 or self.dataset.ndim != 1:
@@ -233,7 +261,7 @@ class TrapezoidalShaperAlg:
                 
         
         
-        self.mean_computed_scaling = avg_h_a_ratio
+        self.mean_computed_scaling = avg_h_a_ratio + sigmaq_h_a_ratio
         if out is not None:
             save_trap_params(avg_h_a_ratio, sigmaq_h_a_ratio, out=out)
         self.show_results_height_ratio( avg_h_a_ratio, sigmaq_h_a_ratio)
