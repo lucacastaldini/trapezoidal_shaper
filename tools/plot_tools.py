@@ -103,7 +103,7 @@ def plot_input_trap_time_waveforms(tt, dd, vv, s_vals_scaled, top_mean_windows, 
     # Plot original signal vv
     axs[0].plot(tt, vv, label='input vv')
     for ttino in t_zeros:
-        axs[0].axvline(x=t_zeros, linestyle="--", color="black", label=f"tzero: {ttino}")
+        axs[0].axvline(x=ttino, linestyle="--", color="black", label=f"tzero: {ttino}")
     axs[0].set_ylabel('Amplitude input')
     axs[0].grid()
     
